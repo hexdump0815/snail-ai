@@ -171,11 +171,11 @@ might be better.
 when the llama build has finished, lets run it with a model downloaded
 beforehand:
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
 ```
 when it has fully started it should show you the url at which a simple ai chat
-webapp will be available, it should be http://<ip-address>:8033 where ip-adress
-is the ip address of the server you run llama-server on.
+webapp will be available, it should be http://your-llama-server-ip:8033 where
+your-llama-server-ip is the ip address of the server you run llama-server on.
 
 lets go through the commandline options quickly:
 - reasoning off will disable reasoning which might result in endless thinking
@@ -272,7 +272,7 @@ cat > ~/.pi/agent/models.json << EOF
 {
   "providers": {
     "llama-cpp": {
-      "baseUrl": "http://<your-llama-server-ip>:8033/v1",
+      "baseUrl": "http://your-llama-server-ip:8033/v1",
       "api": "openai-completions",
       "apiKey": "none",
       "models": [
@@ -335,7 +335,7 @@ agent. the experiments ran for a few hours for doing their full analysis.
 the first task was to analyze a linux kernel warning i got on a mediatek mt8183
 (kukui) chromebook which was not there with a v6.18.21 kernel but present with
 a v6.18.30 kernel:
-```
+`````
 pi v0.79.1                                                                                                                   
  escape interrupt · ctrl+c/ctrl+d clear/exit · / commands · ! bash · ctrl+o more                                              
  Press ctrl+o to show full startup help and loaded resources.                                                                 
@@ -1249,7 +1249,7 @@ pi v0.79.1
                                                                                                                               
  The fix should move cancel_work_sync() to after the mutex is acquired and after resources are released, but before           
  kfree(ctx).
-```
+`````
 the later proposed fix for this problem on the linux kernel mailinglist was:
 https://lore.kernel.org/linux-media/20260401-mtk-jpeg-release-issue-v1-1-2271a1779340@collabora.com/
 ... i would say our local little coding agent came quite close - i did not take
@@ -1263,7 +1263,7 @@ another and last example for now: this time it was to analyze a kernel message
 which appeared in linux v6.18 where audio on the same chromebook did not work
 anymore - audio was working there with v6.12 but sometimes it broke there too
 when resuming from suspend and then similar error messages came up:
-```
+`````
  pi v0.79.1                                                                                                                   
  escape interrupt · ctrl+c/ctrl+d clear/exit · / commands · ! bash · ctrl+o more                                              
  Press ctrl+o to show full startup help and loaded resources.                                                                 
@@ -1712,5 +1712,5 @@ when resuming from suspend and then similar error messages came up:
                                                                                                                               
  The error is typically caused by hardware not being ready or register access failures, often due to power management,        
  initialization, or hardware state issues.
-```
+`````
 the fact that it mentioned power management brought me to the point of trying a patch (mt81xx-pmdomain.patch) i found in recent postmarketos without any explaination but which dealt with power management domains and that actually fixed the problem: https://github.com/hexdump0815/linux-mainline-mediatek-mt81xx-kernel/commit/87cd8350a9e98ae22c02802bd6b022d7de7053be ... so again surprisingly useful for such a simple local coding agent setup.
