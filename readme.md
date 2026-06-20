@@ -126,6 +126,12 @@ stuff from samsung, sk hynix, micron etc. worked fine so far)
   instance)
 - it is very cheap
 
+this system has - like many other smaller systems - a builtin gpu, i.e. the gpu
+is part of the cpu/soc and not a separate pci card. this has some advantage for
+using such systems for llms: they share their ram between the cpu and gpu (so
+called unified memory) and usually about half of the ram can be accessed by the
+gpu directly with llama.cpp via the mesa vulkan gpu driver.
+
 if you have some other old system around here are some things to consider:
 - avoid the old j4105 etc. (or even older) celerons (like the popular fujitsu
   s740) as they have no avx2 and no good gpu and are thus nearly useless for
@@ -208,6 +214,21 @@ and https://github.com/ggml-org/llama.cpp/discussions/23470 )
 - the remaining parameters are the recommended model parameters for qwen
   3.5/3.6 for coding ... for gemma models those parameters would be "--temp 1.0
 --top-p 0.95 --top-k 64"
+
+using those options one can achieve around 1+/- token per second for
+pre-processing (pp = i.e. the llm processing your input to it) and also for
+token generation (tg = i.e. the llm creating and writing output to us) on a hp
+t630 thin client with the models mentioned above and depending a bit on the
+actual model, ram size (i.e. how much of the model will fit directly into the
+gpu memory) and of course the system used. when using a coding agent like
+described below the pp value will get a bit better due to caching effects on
+the input (often around 5 times, so something around 5+/- token per second).
+the llama-server will print out statistics about preprocessing and token
+generation speed from time to time, so it is a good idea to keep the window
+where it got started open somewhere - this is also nice to see the requests
+coming in from the coding agent described below. the token rates do not really
+sound that high, but seing the llm in action shows that it is not that bad and
+its actually quite nice to see it at work.
 
 ## coding with pi
 
