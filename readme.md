@@ -164,8 +164,11 @@ build it yourself as you want the latest and greatest:
 ```
 # this step is only required if building with vulkan support
 sudo apt-get -y install libvulkan1 mesa-vulkan-drivers vulkan-tools glslc libvulkan-dev libcurl4-openssl-dev spirv-headers
-git clone https://github.com/ggml-org/llama.cpp cd llama.cpp # omit the -DGGML_VULKAN=1 in case you want cpu only
-cmake -B build -DGGML_VULKAN=1 cmake --build build --config Release -j 8
+git clone https://github.com/ggml-org/llama.cpp
+cd llama.cpp
+# omit the -DGGML_VULKAN=1 in case you want cpu only
+cmake -B build -DGGML_VULKAN=1
+cmake --build build --config Release -j 8
 ```
 this will create: build/bin/llama-cli and build/bin/llama-server (among a lot
 of other stuff)
