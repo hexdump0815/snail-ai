@@ -70,11 +70,20 @@ often got completely lost quickly. starting with qwen-3.5-9B i got relatively
 consistently useable results and larger models of course are likely to improve
 the situation even more.
 
+update: meanwhile i did some more tests with smaller models on even smaller
+systems with less ram and to my surprise i was still able to get useful results
+with this setup (the test setup was a kukui-krane chromebook running the latest
+debian trixie based velvet-os with a mt8183 soc/cpu with 8 cores and 4gb ram
+and llama.cpp running on cpu only).  i added the recommended models for playing
+around with on such smaller systems in the list below.
+
 as a result the following models seem to make sense for a certain ram size of
 the llm system and should give useable results to a good degree (they are
 essentially the maximum size possible for the given ram size - smaller models
 with more ram are of course no problem):
-- 8gb: qwen-3.5-9B-q4 or gemma-4-12b-q3
+- 4gb: qwen-3.5-4B-q4/q5 or gemma-4-e2b-q4
+- 6gb: qwen-3.5-4B-q6 or gemma-4-e2b-q5/q6
+- 8gb: qwen-3.5-9B-q4, gemma-4-e4b-q4/q5 or gemma-4-12b-q3
 - 12gb: qwen-3.5-9B-q5, gemma-4-12b-q4 or gemma-4-26b-a4b-q2
 - 16gb: qwen-3.6-35b-a3b-q2 or gemma-4-26b-a4b-q3
 - 24gb: qwen-3.6-35b-a3b-q3/q4 or gemma-4-26b-a4b-q4/q5
@@ -232,6 +241,12 @@ where it got started open somewhere - this is also nice to see the requests
 coming in from the coding agent described below. the token rates do not really
 sound that high, but seing the llm in action shows that it is not that bad and
 its actually quite nice to see it at work.
+
+update: here is a sample commandline from my experiments mentioned in the
+update above on the 4gb ram system and running on cpu only
+```
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit off -t 8 --ctx-size 131072 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+```
 
 ## coding with pi
 
