@@ -163,7 +163,9 @@ some recommendations when setting up the system:
 - avoid kswapd running too much when the llm is warmed up and running as that
   would mean it would not fit completely into ram which would massively slow
 down everything (some kswapd usage and sys+wait time at the beginning is fine
-... check with top and then shift-h)
+to bring the model into memory) and when fully running llama-server should
+consume 90+ % cpu for all threads as otherwise it is bound too much to io by
+reading too much from disk still ... check with top and then shift-h
 
 ## llm setup and tuning
 
@@ -171,6 +173,11 @@ building llama.cpp is easy -
 https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md - and always
 build it yourself as you want the latest and greatest:
 ```
+# some stuff required for the build
+sudo apt-get -y install build-essential cmake pkg-config
+# this step is only required if building with openblas support for cpu only operation
+# it might give around 10% better pre processing and unchanged token generation rate
+sudo apt-get -y install libopenblas-dev
 # this step is only required if building with vulkan support
 sudo apt-get -y install libvulkan1 mesa-vulkan-drivers vulkan-tools glslc libvulkan-dev libcurl4-openssl-dev spirv-headers
 git clone https://github.com/ggml-org/llama.cpp
@@ -189,7 +196,7 @@ might be better.
 when the llama build has finished, lets run it with a model downloaded
 beforehand:
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
 ```
 when it has fully started it should show you the url at which a simple ai chat
 webapp will be available, it should be http://your-llama-server-ip:8033 where
@@ -223,6 +230,9 @@ and https://github.com/ggml-org/llama.cpp/discussions/23470 )
   the openai style api will be available once the llama-server is running
 - timeout is some timeout value a bit increased to not fail with our slow llm
   too quickly
+- lv defines the log level and setting it to 4 gives some useful output about
+  the memory usage for the model and the caches which is very helpful for
+tuning the commandline to a certain memory size
 - the remaining parameters are the recommended model parameters for qwen
   3.5/3.6 for coding ... for gemma models those parameters would be "--temp 1.0
 --top-p 0.95 --top-k 64"
@@ -245,8 +255,18 @@ its actually quite nice to see it at work.
 update: here is a sample commandline from my experiments mentioned in the
 update above on the 4gb ram system and running on cpu only
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit off -t 8 --ctx-size 131072 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack --ctx-size 45568 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
 ```
+new here is the "no-repack" parameter which avoids the on-the-fly reordering of
+the model data in memory to make it more efficient for some advanced
+instructions in newer processors in cpu-only scenarios, but the downside is
+that it requires quite a bit more memory which we have too little of already.
+as a result the idea is to disable this option and save quite a bit of memory
+and paying for that with slightly lower token rates. so we run on cpu only and
+thus do not need to fit the memory between cpu and gpu and we lower some
+parameters (ctx-size and ctv) to reduce the memory consumption further. the
+"--fit off" option could also be replaced with "--fit-target 0" here for cpu
+only usage as it might give slightly better memory logging output for tuning.
 
 ## coding with pi
 
