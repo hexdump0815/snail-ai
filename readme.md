@@ -176,7 +176,7 @@ build it yourself as you want the latest and greatest:
 # some stuff required for the build
 sudo apt-get -y install build-essential cmake pkg-config
 # this step is only required if building with openblas support for cpu only operation
-# it might give around 10% better pre processing and unchanged token generation rate
+# it might give around 10-20% better pre processing and unchanged token generation rate
 sudo apt-get -y install libopenblas-dev
 # this step is only required if building with vulkan support
 sudo apt-get -y install libvulkan1 mesa-vulkan-drivers vulkan-tools glslc libvulkan-dev libcurl4-openssl-dev spirv-headers
