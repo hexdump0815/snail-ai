@@ -255,6 +255,7 @@ its actually quite nice to see it at work.
 update: here is a sample commandline from my experiments mentioned in the
 update above on the 4gb ram system and running on cpu only
 ```
+# when using openblas, please also do "export OMP_NUM_THREADS=1" before running llama-server
 ./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack --ctx-size 45568 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
 ```
 new here is the "no-repack" parameter which avoids the on-the-fly reordering of
