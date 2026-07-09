@@ -183,6 +183,7 @@ sudo apt-get -y install libvulkan1 mesa-vulkan-drivers vulkan-tools glslc libvul
 git clone https://github.com/ggml-org/llama.cpp
 cd llama.cpp
 # omit the -DGGML_VULKAN=1 in case you want cpu only
+# add -DGGML_BLAS=ON -DGGML_BLAS_VENDOR=OpenBLAS instead to build with openblas
 cmake -B build -DGGML_VULKAN=1
 cmake --build build --config Release -j 8
 ```
