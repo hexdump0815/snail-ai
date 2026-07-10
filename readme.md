@@ -74,8 +74,10 @@ update: meanwhile i did some more tests with smaller models on even smaller
 systems with less ram and to my surprise i was still able to get useful results
 with this setup (the test setup was a kukui-krane chromebook running the latest
 debian trixie based velvet-os with a mt8183 soc/cpu with 8 cores and 4gb ram
-and llama.cpp running on cpu only).  i added the recommended models for playing
-around with on such smaller systems in the list below.
+and llama.cpp running on cpu only - later i tested it to be working quite well
+even on an amlogic s905x3 tv box with 4 cores and 4gb ram running velvet-os).
+i added the recommended models for playing around with on such smaller systems
+in the list below.
 
 as a result the following models seem to make sense for a certain ram size of
 the llm system and should give useable results to a good degree (they are
