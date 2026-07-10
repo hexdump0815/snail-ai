@@ -310,7 +310,7 @@ sudo apt install -y mise
 ```
 - podman installation ... docker might be an alternative too
 ```
-sudo apt-get -y podman podman-docker
+sudo apt-get -y install podman podman-docker
 # allow podman to run with multiple user-ids inside - https://github.com/containers/podman/issues/15611
 # the user account used to run podman here is "linux"
 sudo usermod --add-subuids 10000-65536 linux
