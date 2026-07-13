@@ -162,6 +162,10 @@ some recommendations when setting up the system:
   based velvet-os)
 - disable zswap and zram if any of those is in use (we want all of the memory
   and cpu available for the llm)
+- make sure enough swap sapce is configured: with accidentally only 512mb swap
+  instead of the recommended 1-2x ram size some token generation rate went down
+by a factor of 20+, most probably due to swap backed mmap of model and cache
+regions not fitting into memory maybe
 - avoid kswapd running too much when the llm is warmed up and running as that
   would mean it would not fit completely into ram which would massively slow
 down everything (some kswapd usage and sys+wait time at the beginning is fine
