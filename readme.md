@@ -143,6 +143,15 @@ using such systems for llms: they share their ram between the cpu and gpu (so
 called unified memory) and usually about half of the ram can be accessed by the
 gpu directly with llama.cpp via the mesa vulkan gpu driver.
 
+update: i just noticed that for some so far unknown reason running llama.cpp
+with the vulkan driver on a hp t630 with 24gb of ram (16+8) results in strange
+memory errors from the amdgpu driver. 32gb (16+16) is working fine and also
+12gb with mixed memory too (8+4) is working fine. more analysis is required: so
+far i checked the memory hardware (all good), some iommu related kernel cmdline
+options, but did not find a solution for this problem yet. i guess i did my
+initial tests on a 32gb system back then most probably and not on a 24gb
+system, which runs perfectly fine otherwise with linux.
+
 if you have some other old system around here are some things to consider:
 - avoid the old j4105 etc. (or even older) celerons (like the popular fujitsu
   s740) as they have no avx2 and no good gpu and are thus nearly useless for
