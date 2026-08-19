@@ -129,6 +129,10 @@ the wall plug)
   1866+ ddr4 modules, so nearly all old ram should be fine (it only has
 problems with newer double sided chinese 16gb modules - all older standard
 stuff from samsung, sk hynix, micron etc. worked fine so far)
+- there seems to be a problem when using llama.cpp with more than 16gb of ram
+  and the vulkan driver, at least i regularly got strange memory corruption
+errors from the amdgpu kernel driver when using larger models on systems with
+more than 16gb of ram (see the update note below)
 - it has two sata m2 ssd slots (not nvme) and those disks can be found used
   cheap as well
 - the cpu is slow, but the gpu is quite ok for such a small system of that age
@@ -148,9 +152,15 @@ with the vulkan driver on a hp t630 with 24gb or 32gb of ram (16+8 or 16+16)
 sometimes results in strange edc/ecc memory errors from the amdgpu driver. this
 sometimes happens reproducable and reliable across reboots even and another
 time it just works fine without any errors again reproducable and reliable
-across reboots. i saw the same problem on two different t630 machines and so
+across reboots. i saw the same problem on three different t630 machines and so
 far have no idea why it seems to come up from time to time and work perfectly
 well other times.
+
+a good alternative for more than 16gb of ram and quite a bit more powerful on
+cpu and gpu side might be the lenovo m75q (gen 1) or hp elitedesk 705 g5 - both
+with a ryzen 3200ge cpu (there are also versions with the ryzen 3400ge with
+hyperthreading and a slightly bigger gpu, but for llama.cpp usage that should
+not make a big difference).
 
 if you have some other old system around here are some things to consider:
 - avoid the old j4105 etc. (or even older) celerons (like the popular fujitsu
@@ -212,7 +222,7 @@ might be better.
 when the llama build has finished, lets run it with a model downloaded
 beforehand:
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
 ```
 when it has fully started it should show you the url at which a simple ai chat
 webapp will be available, it should be http://your-llama-server-ip:8033 where
@@ -252,6 +262,9 @@ tuning the commandline to a certain memory size
 - the remaining parameters are the recommended model parameters for qwen
   3.5/3.6 for coding ... for gemma models those parameters would be "--temp 1.0
 --top-p 0.95 --top-k 64"
+- mmap seems to be required for newer versions of llama.cpp as it does no
+  longer seem to default to it and it is required if not everything fits
+completely into (gpu) memory.
 
 using those options one can achieve around 1+/- token per second for
 pre-processing (pp = i.e. the llm processing your input to it) and also for
@@ -268,11 +281,21 @@ coming in from the coding agent described below. the token rates do not really
 sound that high, but seing the llm in action shows that it is not that bad and
 its actually quite nice to see it at work.
 
+newer model gguf files might support "mtp" (multi-token-prediction) which in
+some cases can speed up token generation a bit. to enable it on supported
+models with a new enough llama.cpp the following commandline options would have
+to be added: "--spec-type draft-mtp --spec-draft-n-max 3" (usually values of 2
+or 3 should give best results, but a bit of experimentation might be a good
+idea). as mtp requires more memory it only makes sense to enable it if there is
+extra memory available as otherwise it might even slow down token generation by
+pushing larger parts of the model out of memory or the gpu resulting in more
+re-reads from disk.
+
 update: here is a sample commandline from my experiments mentioned in the
 update above on the 4gb ram system and running on cpu only
 ```
 # when using openblas, please also do "export OMP_NUM_THREADS=1" before running llama-server
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack --ctx-size 45568 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack --ctx-size 45568 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
 ```
 new here is the "no-repack" parameter which avoids the on-the-fly reordering of
 the model data in memory to make it more efficient for some advanced
