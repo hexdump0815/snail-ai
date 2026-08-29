@@ -62,13 +62,18 @@ by choosing one of the other very common options like ollama, lm-studio etc.
 the agentic part will be described in detail later.
 
 i did some experiments with various models and i would currently strongly
-recommend the qwen 3.5 or 3.6 models for anything coding related as they quite
-consistenly gave best results in my experiments. what might also be a quite
-good option are the gemma-4 models. regarding model sizes my experiments showed
-that 4B or smaller models were simply not able to handle anything complex and
-often got completely lost quickly. starting with qwen-3.5-9B i got relatively
-consistently useable results and larger models of course are likely to improve
-the situation even more.
+recommend the qwen 3.5, 3.6 or 3.8 models for anything coding related as they
+quite consistenly gave best results in my experiments. what might also be a
+quite good option are the muse-glimmer and gemma-4 models. regarding model
+sizes my experiments showed that 4B or smaller models were simply not able to
+handle anything complex and often got completely lost quickly. starting with
+qwen-3.5-9B (often even qwen-3.5-4B) i got relatively consistently useable
+results and larger models of course are likely to improve the situation even
+more. there are often also so called fine-tuned versions of those models which
+claim to generate tokens faster, require less memory or give more accurate
+results as the base models, but usually the real gain is very small or not
+really measurable or they are even worse than the corresponding base models, so
+the recommendation would be to stay with the base models.
 
 update: meanwhile i did some more tests with smaller models on even smaller
 systems with less ram and to my surprise i was still able to get useful results
@@ -87,9 +92,9 @@ with more ram are of course no problem):
 - 6gb: qwen-3.5-4B-q6 or gemma-4-e2b-q5/q6
 - 8gb: qwen-3.5-9B-q4, gemma-4-e4b-q4/q5 or gemma-4-12b-q3
 - 12gb: qwen-3.5-9B-q5, gemma-4-12b-q4 or gemma-4-26b-a4b-q2
-- 16gb: qwen-3.6-35b-a3b-q2 or gemma-4-26b-a4b-q3
-- 24gb: qwen-3.6-35b-a3b-q3/q4 or gemma-4-26b-a4b-q4/q5
-- 32gb: qwen-3.6-35b-a3b-q4/q5 or gemma-4-26b-a4b-q5/q6
+- 16gb: qwen-3.6-35b-a3b-q2, qwen-3.8-27b-q2/q3, muse-glimmer-30b-q2/q3, gemma-4-26b-a4b-q3 or gemma-4-12b-q5
+- 24gb: qwen-3.6-35b-a3b-q3/q4, qwen-3.8-27b-q3/q4, muse-glimmer-30b-q3/q4 or gemma-4-26b-a4b-q4/q5
+- 32gb: qwen-3.6-35b-a3b-q4/q5, qwen-3.8-27b-q4/q5, muse-glimmer-30b-q4/q5 or gemma-4-26b-a4b-q5/q6
 
 the different q-values stand for different quantizations which are something
 like different resolutions of the models: the higher the more correct, but also
