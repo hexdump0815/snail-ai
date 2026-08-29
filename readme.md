@@ -313,6 +313,73 @@ parameters (ctx-size and ctv) to reduce the memory consumption further. the
 "--fit off" option could also be replaced with "--fit-target 0" here for cpu
 only usage as it might give slightly better memory logging output for tuning.
 
+## getting more memory the easy way and more tuning
+
+on amd systems with a builtin gpu it is possible to get more (actually close to
+all of the) memory available to be accessed directly by the gpu by adding a few
+kernel commandline parameters:
+```
+ttm.pages_limit=numpages ttm.page_pool_size=numpages
+```
+where numpages can be easily calculated by this python one-liner:
+```
+python3 -c "print(size-in-gb * 1024**3 // 4096)"
+```
+according to my experiments "size-in-gb" can be set to about the memory size of
+the system minus 1 or 2 gb for a system which is only used in a server-style
+for running the llm. you can check if the memory got allocated properly after a
+reboot via "dmesg | grep GTT". it is also recommended to set the video memory
+allocation in the bios to 256mb (if possible, also smaller values in the bios
+ended up as 256mb in the linux kernel for me - so it looks like this is a good
+minimal value). to free up some more memory it is also recommended to stop the
+display manager like lightdm, gdm, sddm etc. or even better to not even start
+it for such a llm server system.
+
+another optimization for amd systems with builtin gpu is to add:
+```
+amd_iommu=off
+```
+to the kernel cmdline for a slight improvement of the token generation speed
+(around 10%). as this opens up quite a few security relevant holes in the
+system, it should not be done for systems which have anything else besides the
+llm running (so no desktop system or coding agent running on the same system).
+
+i also did some experiments with the same options on intel systems
+(intel_iommu=off for intel then), but did not see any improvements or more
+memory available to the gpu as it looks like the intel gpu driver does not seem
+to use the ttm memory framework. even setting "GGML_VK_PREFER_HOST_MEMORY=1"
+(see: https://github.com/ggml-org/llama.cpp/discussions/12770 ) did not make
+any difference in my experiments.
+
+besides those kernel level changes to make more more memory avaiable to the gpu
+on some amd systems there are also a few more llama.cpp options which should
+help on any system to free up some more memory for the model and the context:
+```
+--parallel 1 --cache-ram 0 --no-mmproj -ctxcp xyz
+```
+those have the following background:
+- parallel 1 - if we just run our llm to serve a single agent we do not prepare
+  to be able to serve multiple consumers, which seems to save some memory
+- cache-ram 0 - same as above: if we only serve one consumer it does not make
+  sense to cache anything for cross consumer usage
+- no-mmproj - in case the mmproj file for being able to understand visual and
+  graphics input is included in the gguf file (rarely the case) then this tells
+llama.cpp to ignore it and thus saving some memory (at the cost of loosing the
+capability to handle visual input)
+- ctxcp xyz - this should be adjusted to the context size used: 65536 -ctxcp 8,
+  131072: -ctxcp 16, 262144: -ctxcp 32 etc. to save some memory as well
+experimenting with those options was inspired by
+https://www.reddit.com/r/LocalLLM/comments/1vq5oyu/guide_for_running_dense_models_on_16_gb_vram_qwen/
+and https://gist.github.com/joematthews/69e60b357470487618a0b14b0aabecb8 ...
+
+for tuning the memory usage and cpu/gpu distribution of it it is a good idea to
+run the llama-server first without a fixed context size (no "--ctx-size"
+parameter) and see which maximal context size gets calculated by the auto-fit
+algorithm built into llama.cpp (it can be seen in the beginning of the "-lv 4"
+logging output of llama.cpp) and then set it to that or a lower value via the
+"--ctx-size" parameter to make sure as much of the model as possible will be
+put into gpu memory.
+
 ## coding with pi
 
 we now already have some simple ai chat to communicate with our llm, but for
