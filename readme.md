@@ -368,6 +368,7 @@ llama.cpp to ignore it and thus saving some memory (at the cost of loosing the
 capability to handle visual input)
 - ctxcp xyz - this should be adjusted to the context size used: 65536 -ctxcp 8,
   131072: -ctxcp 16, 262144: -ctxcp 32 etc. to save some memory as well
+
 experimenting with those options was inspired by
 https://www.reddit.com/r/LocalLLM/comments/1vq5oyu/guide_for_running_dense_models_on_16_gb_vram_qwen/
 and https://gist.github.com/joematthews/69e60b357470487618a0b14b0aabecb8 ...
