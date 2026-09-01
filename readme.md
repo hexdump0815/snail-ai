@@ -467,6 +467,48 @@ has started once and has created its ~/.pi/agent/settings.json just add:
 ```
 in there.
 
+another problem i noticed with newer versions of pi (i think) is when a slow
+system (espcially with slow disk io) is used as agent system, then operations
+on the filesystem (especially git commands) might take very long and timeout
+quickly in the agent workflow. a possible workaround is to add an extension to
+pi which will strip the timeouts from all executed commands. for that simply
+put the following content into a file ~/.pi/agent/extensions/no-timeout.ts:
+```
+/**
+ * from: https://www.npmjs.com/package/pi-extension-no-timeout?activeTab=code
+ * via: https://pi.dev/packages/pi-extension-no-timeout
+ *
+ * No-Timeout Extension
+ *
+ * Strips the `timeout` parameter from all bash tool calls, preventing pi from
+ * killing long-running commands. The LLM sometimes guesses incorrect timeout
+ * values, which causes important tasks to be interrupted mid-execution.
+ *
+ * Works by intercepting the `tool_call` event and deleting `event.input.timeout`
+ * before the bash tool executes. The mutation is seen by the actual tool
+ * execution, so timeout is effectively disabled.
+ *
+ * Usage:
+ *   pi -e ./no-timeout.ts
+ *
+ * Or install globally for all projects:
+ *   cp no-timeout.ts ~/.pi/agent/extensions/
+ */
+
+import { type ExtensionAPI, isToolCallEventType } from "@earendil-works/pi-coding-agent";
+
+export default function (pi: ExtensionAPI) {
+  pi.on("tool_call", async (event, _ctx) => {
+    // Only intercept bash tool calls
+    if (!isToolCallEventType("bash", event)) return;
+
+    if (event.input.timeout !== undefined) {
+      delete event.input.timeout;
+    }
+  });
+}
+```
+
 now you can create an empty directory, start pi in it via
 ```
 mise run pi
