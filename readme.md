@@ -397,40 +397,40 @@ maybe.
 ### hp t630 with 8gb ram
 
 - kernel cmdline additions for about 7gb of gtt memory: ttm.pages_limit=1835008 ttm.page_pool_size=1835008 amd_iommu=off
-- llama-server cmdline: -m <model-path>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --mmap
+- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --mmap
 - achieved speed: pp 6.6 - tg 1.4
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb
 
 ### hp t630 with 12gb ram
 
 - kernel cmdline additions for about 11gb of gtt memory: ttm.pages_limit=2883584 ttm.page_pool_size=2883584 amd_iommu=off
-- llama-server cmdline: -m <model-path>/Qwen3.5-9B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
+- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
 - achieved speed: pp 6.4 - tg 1.6
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, mtp model from Qwen3.5-9B-MTP-GGUF has to be used
 
 ### hp t630 with 16gb ram
 
 - kernel cmdline additions for about 15gb of gtt memory: ttm.pages_limit=3932160 ttm.page_pool_size=3932160 amd_iommu=off
-- llama-server cmdline: -m <model-path>/Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
+- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
 - achieved speed: pp 6.2 - tg 3.8
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, mtp model from Qwen3.6-35B-A3B-MTP-GGUF has to be used, tg is quite good but due to Q2 the cleverness of the model is limited and it might take longer to get to the point
 
-- llama-server cmdline: -m <model-path>/Qwen3.8-27B-UD-Q3_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj
+- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q3_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj
 - achieved speed: pp 2.0 - tg 0.4
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but it might still be worth it due to the clverness of the 27B model, resulting context size after auto-fit will be around 120k+
 
 ### lenovo m75q ryzen 3200ge 32gb ram
 
 - kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off
-- llama-server cmdline: -m <model-path>/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q4_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
+- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
 - achieved speed: pp 40 - tg 10
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite good but the 35B-a3B moe model is not as clever as the 27B dense one and might take longer to get to the point
 
-- llama-server cmdline: -m <model-path>/Qwen3.8-27B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
+- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
 - achieved speed: pp 11.5 - tg 2.5
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but the 27B dense model is more clever than the 35B-a3B moe model and might get quicker to the point
 
-- llama-server cmdline: -m <model-path>/Muse-Glimmer-30B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host <ip-address> --port 8033 --timeout 3600 --temp 1.0 --top-p 0.95 --top-k 64 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072
+- llama-server cmdline: -m model-path/Muse-Glimmer-30B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 1.0 --top-p 0.95 --top-k 64 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072
 - achieved speed: pp 12.5 - tg 1.5
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but the 30B dense model is quite clever and might get quicker to the point
 
