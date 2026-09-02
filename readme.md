@@ -67,7 +67,7 @@ quite consistenly gave best results in my experiments. what might also be a
 quite good option are the muse-glimmer and gemma-4 models. regarding model
 sizes my experiments showed that 4B or smaller models were simply not able to
 handle anything complex and often got completely lost quickly. starting with
-qwen-3.5-9B (often even qwen-3.5-4B) i got relatively consistently useable
+qwen-3.5-9B (sometimes even qwen-3.5-4B) i got relatively consistently useable
 results and larger models of course are likely to improve the situation even
 more. there are often also so called fine-tuned versions of those models which
 claim to generate tokens faster, require less memory or give more accurate
@@ -186,7 +186,7 @@ some recommendations when setting up the system:
   based velvet-os)
 - disable zswap and zram if any of those is in use (we want all of the memory
   and cpu available for the llm)
-- make sure enough swap sapce is configured: with accidentally only 512mb swap
+- make sure enough swap space is configured: with accidentally only 512mb swap
   instead of the recommended 1-2x ram size some token generation rate went down
 by a factor of 20+, most probably due to swap backed mmap of model and cache
 regions not fitting into memory maybe
@@ -220,14 +220,14 @@ cmake --build build --config Release -j 8
 this will create: build/bin/llama-cli and build/bin/llama-server (among a lot
 of other stuff)
 
-it is a good idea to rebuild it (just remove the build dir and start over) from
+it is a good idea to rebuild it (just rename the build dir and start over) from
 time to time as llama.cpp development is moving on very fast and newer versions
-might be better.
+might be better (but sometimes also might have regressions).
 
 when the llama build has finished, lets run it with a model downloaded
 beforehand:
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q5_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
 ```
 when it has fully started it should show you the url at which a simple ai chat
 webapp will be available, it should be http://your-llama-server-ip:8033 where
@@ -237,25 +237,31 @@ lets go through the commandline options quickly:
 - reasoning off will disable reasoning which might result in endless thinking
   before giving some real output ... for me it worked quite well with that
 disabled
-- fa on and fit target enables the automatic memory fitting of llama.cpp due to
-  which it will automatically distribute itself across the cpu, gpu and
-available memory ... fit target tells it to leave some gpu memory free and 1200
-mb worked well for me on the t630, in case it is too low one will get
-"vk::Queue::submit: ErrorDeviceLost" errors
+- fa on enables flash attention which usually helps with performance
+- fit-target s used by the automatic memory fitting of llama.cpp due to which
+  it will automatically distribute itself across the cpu, gpu and available
+memory ... fit target tells it to leave some gpu memory free and 1200 mb worked
+well for me on the t630, in case it is too low one will get "vk::Queue::submit:
+ErrorDeviceLost" errors, so just start with a higher value and lower it until
+you run into those errors and then go one step back
 - t is the number of threads llama.cpp should run with: the number of real
   (i.e. no hyperthreading) cores of your system is a good start and sometimes
 about 75% of it rounded might work even better
-- cts-size is the context size which should be kept in the llm's memory (as in
+- ctx-size is the context size which should be kept in the llm's memory (as in
   brain memory and not ram) in tokens of which each is about 4 chars ... maybe
 try to increase it step by step as long as everything still fits well into
-memory (65536, 98304, 131072 or even more)
+memory (65536, 98304, 131072 or even more), alternatively omit it and let the
+auto-fit determine which context size still fits well into memory and then
+maybe choose a slightly lower round number, 131072 is a good starting point for
+agentic use
 - ctk and ctv describe the quatization of the key (k) value (v) cache to reduce
   the (ram) memory required to hold it by lowering the resolution ... good
 values are 8_0 (better not lower) for k and 8_0, 5_0 or 4_0 for v (that still
 gives good results with such lower values - see also:
 https://wiki.archlinux.org/title/Llama.cpp
 https://anbeeld.com/articles/kv-cache-quantization-benchmarks-for-long-context#section-13-5
-and https://github.com/ggml-org/llama.cpp/discussions/23470 )
+and https://github.com/ggml-org/llama.cpp/discussions/23470 ), maybe start with
+ctv 4_0 and go up if there is still memory left
 - jinja instructs llama.cpp to use an embedded template of the gguf model file
 - host and port define the ip and port where the simple ai chat app and also
   the openai style api will be available once the llama-server is running
@@ -269,7 +275,8 @@ tuning the commandline to a certain memory size
 --top-p 0.95 --top-k 64"
 - mmap seems to be required for newer versions of llama.cpp as it does no
   longer seem to default to it and it is required if not everything fits
-completely into (gpu) memory.
+completely into (gpu) memory, maybe first try without it and if it results in
+errors during startup then add it and see if that helps
 
 using those options one can achieve around 1+/- token per second for
 pre-processing (pp = i.e. the llm processing your input to it) and also for
@@ -289,7 +296,7 @@ its actually quite nice to see it at work.
 newer model gguf files might support "mtp" (multi-token-prediction) which in
 some cases can speed up token generation a bit. to enable it on supported
 models with a new enough llama.cpp the following commandline options would have
-to be added: "--spec-type draft-mtp --spec-draft-n-max 3" (usually values of 2
+to be added: "--spec-type draft-mtp --spec-draft-n-max 2" (usually values of 2
 or 3 should give best results, but a bit of experimentation might be a good
 idea). as mtp requires more memory it only makes sense to enable it if there is
 extra memory available as otherwise it might even slow down token generation by
@@ -316,8 +323,8 @@ only usage as it might give slightly better memory logging output for tuning.
 ## getting more memory the easy way and more tuning
 
 on amd systems with a builtin gpu it is possible to get more (actually close to
-all of the) memory available to be accessed directly by the gpu by adding a few
-kernel commandline parameters:
+all instead of the usually around half of the) memory available to be accessed
+directly by the gpu by adding a few kernel commandline parameters:
 ```
 ttm.pages_limit=numpages ttm.page_pool_size=numpages
 ```
