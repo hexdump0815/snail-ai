@@ -425,7 +425,6 @@ maybe.
 ### hp t630 with 16gb ram Qwen3.8-27B-Q3
 
 - kernel cmdline additions for about 15gb of gtt memory: ttm.pages_limit=3932160 ttm.page_pool_size=3932160 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
 - llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q3_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj
 - achieved speed: pp 2.0 - tg 0.4
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but it might still be worth it due to the clverness of the 27B model, resulting context size after auto-fit will be around 120k+
