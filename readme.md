@@ -13,13 +13,13 @@ experimenting, researching and trying to move the lower limit for running llms
 locally - along the way learning a bit more how ai works and with the nice side
 effect of gaining some independence from those big ai companies of today.
 
-to go somewhere with this the idea is to change the perspective a bit away from
-what todays ai marketing tells us all the time: to have an all knowing ai which
-gives you answers about anything instantly. how about seeing ai as something
-which can support and inspire while oneself is thinking and trying to solve
-problems - maybe it can be useful too if you ask it something before lunch and
-will have some answer afterwards or ask before going to bed and have a response
-when starting into the day.
+to go somewhere with this the idea it is important to change the perspective a
+bit away from what todays ai marketing tells us all the time: to have an all
+knowing ai which gives you answers about anything instantly. how about seeing
+ai as something which can support and inspire while oneself is thinking and
+trying to solve problems - maybe it can be useful too if you ask it something
+before lunch and will have some answer afterwards or ask before going to bed
+and have a response when starting into the day.
 
 ## divide and conquer
 
@@ -41,18 +41,19 @@ desktop system or laptop via some ssh session or by api calls
 ## hardware requirements, tools and models
 
 in my experiments i was able to scale down the system running the llm to 8gb of
-ram, an old or simple cpu with an integrated not too big gpu or even without a
-useable gpu. better hardware (more ram, faster cpu or gpu) will of course help
-to make things faster and allow to solve more complex tasks, but even with the
-minimal setup mentioned here i was able to get surprisingly good results. more
-details and recommendations for hardware will follow later.
+ram (in some setups even down to 4gb of ram), an old or simple cpu with an
+integrated not too big gpu or even without a useable gpu. better hardware (more
+ram, faster cpu or gpu) will of course help to make things faster and allow to
+solve more complex tasks, but even with the minimal setup mentioned here i was
+able to get surprisingly good results. more details and recommendations for
+hardware will follow later.
 
 for the agentic system i was able to go down to just a simple android tv box
 running mainline linux (using velvet-os just like on the llm machine as well)
 with 4gb ram and some 32gb sd card or other working storage as in my
 experiments it was mainly used to interact with the code base (the linux-stable
-kernel git repo in the case of the experiments) via git, find, grep etc. and
-for that there is nothing really powerful required.
+kernel git repo in the case of some of the experiments) via git, find, grep
+etc. and for that there is nothing really powerful required.
 
 for running the llm i was using a self compiled (details later) version of
 https://github.com/ggml-org/llama.cpp as it is very actively developed, can
@@ -63,10 +64,16 @@ the agentic part will be described in detail later.
 
 i did some experiments with various models and i would currently strongly
 recommend the qwen 3.5, 3.6 or 3.8 models for anything coding related as they
-quite consistenly gave best results in my experiments. what might also be a
-quite good option are the muse-glimmer and gemma-4 models. regarding model
-sizes my experiments showed that 4B or smaller models were simply not able to
-handle anything complex and often got completely lost quickly. starting with
+quite consistenly gave best results in my experiments. besides those there are
+also two rather unknown models which surprised me in a very positive way:
+grootteam-groot-19b-a3b (quantized gguf files from bartowski) which is a bit
+like the little brother or sister of qwen3.6-35b-a3b with nearly the same
+quality but lower memory requirements and spark-x2.6-4b which stands out due to
+its extremely low memory requirements (it can run even run with 4gb of ram and
+still delivering surprisingly good results). what might also be a quite good
+option are the muse-glimmer and gemma-4 models. regarding model sizes my
+experiments showed that 4B or smaller models were simply not able to handle
+anything complex and often got completely lost quickly. starting with
 qwen-3.5-9B (sometimes even qwen-3.5-4B) i got relatively consistently useable
 results and larger models of course are likely to improve the situation even
 more. there are often also so called fine-tuned versions of those models which
@@ -75,37 +82,35 @@ results as the base models, but usually the real gain is very small or not
 really measurable or they are even worse than the corresponding base models, so
 the recommendation would be to stay with the base models.
 
-update: meanwhile i did some more tests with smaller models on even smaller
-systems with less ram and to my surprise i was still able to get useful results
-with this setup (the test setup was a kukui-krane chromebook running the latest
-debian trixie based velvet-os with a mt8183 soc/cpu with 8 cores and 4gb ram
-and llama.cpp running on cpu only - later i tested it to be working quite well
-even on an amlogic s905x3 tv box with 4 cores and 4gb ram running velvet-os).
-i added the recommended models for playing around with on such smaller systems
-in the list below.
-
 as a result the following models seem to make sense for a certain ram size of
 the llm system and should give useable results to a good degree (they are
 essentially the maximum size possible for the given ram size - smaller models
 with more ram are of course no problem):
-- 4gb: qwen-3.5-4B-q4/q5 or gemma-4-e2b-q4
-- 6gb: qwen-3.5-4B-q6 or gemma-4-e2b-q5/q6
-- 8gb: qwen-3.5-9B-q4, gemma-4-e4b-q4/q5 or gemma-4-12b-q3
-- 12gb: qwen-3.5-9B-q5, gemma-4-12b-q4 or gemma-4-26b-a4b-q2
-- 16gb: qwen-3.6-35b-a3b-q2, qwen-3.8-27b-q2/q3, muse-glimmer-30b-q2/q3, gemma-4-26b-a4b-q3 or gemma-4-12b-q5
-- 24gb: qwen-3.6-35b-a3b-q3/q4, qwen-3.8-27b-q3/q4, muse-glimmer-30b-q3/q4 or gemma-4-26b-a4b-q4/q5
-- 32gb: qwen-3.6-35b-a3b-q4/q5, qwen-3.8-27b-q4/q5, muse-glimmer-30b-q4/q5 or gemma-4-26b-a4b-q5/q6
+- 4gb: qwen-3.5-4b-q4/q5, spark-x2.6-4b-q4/q5 or gemma-4-e2b-q4
+- 6gb: qwen-3.5-4b-q6, spark-x2.6-4b-q5/q6 or gemma-4-e2b-q5/q6
+- 8gb: qwen-3.5-9b-q4, spark-x2.6-4b-q6/q8, groot-19b-a3b-iq2,
+  gemma-4-e4b-q4/q5 or gemma-4-12b-q3
+- 12gb: qwen-3.5-9B-q5, groot-19b-a3b-iq3, gemma-4-12b-q4 or gemma-4-26b-a4b-q2
+- 16gb: qwen-3.6-35b-a3b-q2/iq3, qwen-3.8-27b-q2/iq3, groot-19b-a3b-q4,
+  muse-glimmer-30b-q2/q3, gemma-4-26b-a4b-q3 or gemma-4-12b-q5
+- 24gb: qwen-3.6-35b-a3b-q3/q4, qwen-3.8-27b-q3/q4, groot-19b-a3b-q6,
+  muse-glimmer-30b-q4/q5 or gemma-4-26b-a4b-q4/q5
+- 32gb: qwen-3.6-35b-a3b-q4/q5, qwen-3.8-27b-q5/q6, muse-glimmer-30b-q5/q6 or
+  gemma-4-26b-a4b-q5/q6
 
 the different q-values stand for different quantizations which are something
 like different resolutions of the models: the higher the more correct, but also
 larger (= more ram required) and q4 seems to be currently something like the
 lower limit for useful results with larger models allowing to go a bit lower
-even still. the different B-values stand for billions of parameters: again the
-more the better, but again also larger (= more ram required) and there are some
-special cases where not all parameters are active like A3B or A4B with 3 or 4
-billion active parameters which means they need the memory for all the B
-parameters, but the calculations are only done on the AxB parameters and are
-thus a bit faster without loosing too much of detail.
+even still. the iq models are tuned a bit more for reduced memory requirements
+by giving up a bit of performance. the different rbB-values stand for billions
+of parameters: again the more the better, but again also larger (= more ram
+required) and there are some special cases where not all parameters are active
+like a3b or a4b with 3 or 4 billion active parameters which means they need the
+memory for all the b parameters, but the calculations are only done on the axb
+parameters and are thus a bit faster without loosing too much of detail. exb
+like e2b or e4b stands for effectively that many billion parameters and is thus
+similar to the axb by using less parameters in the end than the model has.
 
 for getting the models i would recommend the corresponding unsloth
 "-ud-qx_k_xl" versions in gguf format (for use with llama.cpp) from
@@ -113,6 +118,9 @@ https://huggingface.co/unsloth - for example for qwen-3.5-9b-q4 that would be
 https://huggingface.co/unsloth/Qwen3.5-9B-GGUF/blob/main/Qwen3.5-9B-UD-Q4_K_XL.gguf
 via the "files and versions" tab of
 https://huggingface.co/unsloth/Qwen3.5-9B-GGUF
+
+another good and reliable source for quantized models in gguf format is
+https://huggingface.co/bartowski
 
 ## the surprisingly old ai server machine
 
@@ -150,7 +158,8 @@ this system has - like many other smaller systems - a builtin gpu, i.e. the gpu
 is part of the cpu/soc and not a separate pci card. this has some advantage for
 using such systems for llms: they share their ram between the cpu and gpu (so
 called unified memory) and usually about half of the ram can be accessed by the
-gpu directly with llama.cpp via the mesa vulkan gpu driver.
+gpu directly with llama.cpp via the mesa vulkan gpu driver (or even more - see
+below).
 
 update: i just noticed that for some so far unknown reason running llama.cpp
 with the vulkan driver on a hp t630 with 24gb or 32gb of ram (16+8 or 16+16)
@@ -159,27 +168,30 @@ sometimes happens reproducable and reliable across reboots even and another
 time it just works fine without any errors again reproducable and reliable
 across reboots. i saw the same problem on three different t630 machines and so
 far have no idea why it seems to come up from time to time and work perfectly
-well other times.
+well other times. so better avoid the hp t630 for llm use with more than 16gb
+of ram.
 
 a good alternative for more than 16gb of ram and quite a bit more powerful on
-cpu and gpu side might be the lenovo m75q (gen 1) or hp elitedesk 705 g5 - both
-with a ryzen 3200ge cpu (there are also versions with the ryzen 3400ge with
-hyperthreading and a slightly bigger gpu, but for llama.cpp usage that should
-not make a big difference).
+cpu and gpu side might be devices built around the ryzen
+2200ge/2400ge/3200ge/3400ge which are all delivering a very similar performance
+for llm usage. recommended devices would be the lenovo m715q tiny and m75q tiny
+(gen 1) as well as some hp elitedesk mini and prodesk mini devices. the hp
+devices have the disadvantage that the fan is always spinning, even when idle.
 
-if you have some other old system around here are some things to consider:
+if you have some other old system around, here are some things to consider:
 - avoid the old j4105 etc. (or even older) celerons (like the popular fujitsu
   s740) as they have no avx2 and no good gpu and are thus nearly useless for
 llm use
 - newer alder-lake-n systems like n95/97/100 etc. seem to perform similar to
   the t630 for llm use, but they are more expensive and usually have only one
-memory slot
-- older core-i intel devices should be fine from gen 11 or so or maybe even a
-  bit older
-- everything amd ryzen zen (zen, zen2, zen3, zen3+, zen4, zen5) seems to be a
-  good choice
+memory slot and can only use at maximum half of the memory for the gpu
+- older core-i intel devices should be fine from gen 11 on or so or maybe even
+  a bit older
+- everything amd ryzen zen (zen, zen+, zen2, zen3, zen3+, zen4, zen5) seems to
+  be a good choice
 - even a h96max-v56 rockchip rk3566 tv box with (rare) 8gb ram was useable
-  running on the cpu only (resulting in about half the speed of the t630)
+  to some degree running on the cpu only (resulting in about half the speed of
+the t630)
 
 some recommendations when setting up the system:
 - some recent linux (debian, ubuntu should all be fine - i used the debian
@@ -194,8 +206,10 @@ regions not fitting into memory maybe
   would mean it would not fit completely into ram which would massively slow
 down everything (some kswapd usage and sys+wait time at the beginning is fine
 to bring the model into memory) and when fully running llama-server should
-consume 90+ % cpu for all threads as otherwise it is bound too much to io by
-reading too much from disk still ... check with top and then shift-h
+consume 90+ % cpu for all threads (if not running on the gpu) as otherwise it
+is bound too much to io by reading too much from disk still ... check with top
+and then shift-h ... if the model is running on the gpu then nvtop might help
+to see if the gpu is properly used
 
 ## llm setup and tuning
 
