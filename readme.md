@@ -174,9 +174,10 @@ of ram.
 a good alternative for more than 16gb of ram and quite a bit more powerful on
 cpu and gpu side might be devices built around the ryzen
 2200ge/2400ge/3200ge/3400ge which are all delivering a very similar performance
-for llm usage. recommended devices would be the lenovo m715q tiny and m75q tiny
-(gen 1) as well as some hp elitedesk mini and prodesk mini devices. the hp
-devices have the disadvantage that the fan is always spinning, even when idle.
+for llm usage (around 4-5 times the tokens per second compared to the hp t630).
+recommended devices would be the lenovo m715q tiny and m75q tiny (gen 1) as
+well as some hp elitedesk mini and prodesk mini devices. the hp devices have
+the disadvantage that the fan is always spinning, even when idle.
 
 if you have some other old system around, here are some things to consider:
 - avoid the old j4105 etc. (or even older) celerons (like the popular fujitsu
@@ -220,7 +221,7 @@ build it yourself as you want the latest and greatest:
 # some stuff required for the build
 sudo apt-get -y install build-essential cmake pkg-config
 # this step is only required if building with openblas support for cpu only operation
-# it might give around 10-20% better pre processing and unchanged token generation rate
+# it might give around 10-20% better preprocessing and unchanged token generation rate
 sudo apt-get -y install libopenblas-dev
 # this step is only required if building with vulkan support
 sudo apt-get -y install libvulkan1 mesa-vulkan-drivers vulkan-tools glslc libvulkan-dev libcurl4-openssl-dev spirv-headers
@@ -236,12 +237,15 @@ of other stuff)
 
 it is a good idea to rebuild it (just rename the build dir and start over) from
 time to time as llama.cpp development is moving on very fast and newer versions
-might be better (but sometimes also might have regressions).
+might be better (but sometimes also might have regressions). it might be a good
+idea to always use the latest released version (tags starting with "v") to have
+some reproducable state and to avoid running into regressions in the middle of
+llama.cpp development.
 
 when the llama build has finished, lets run it with a model downloaded
 beforehand:
 ```
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1200 -t 4 --ctx-size 65536 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_1 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lm mmap -ctx-size 65536
 ```
 when it has fully started it should show you the url at which a simple ai chat
 webapp will be available, it should be http://your-llama-server-ip:8033 where
@@ -250,11 +254,12 @@ your-llama-server-ip is the ip address of the server you run llama-server on.
 lets go through the commandline options quickly:
 - reasoning off will disable reasoning which might result in endless thinking
   before giving some real output ... for me it worked quite well with that
-disabled
+disabled ... for coding agent use it might be a good idea to not disable it and
+control the reasoning level via the coding agent for more flexibility
 - fa on enables flash attention which usually helps with performance
 - fit-target s used by the automatic memory fitting of llama.cpp due to which
   it will automatically distribute itself across the cpu, gpu and available
-memory ... fit target tells it to leave some gpu memory free and 1200 mb worked
+memory ... fit target tells it to leave some gpu memory free and 600 mb worked
 well for me on the t630, in case it is too low one will get "vk::Queue::submit:
 ErrorDeviceLost" errors, so just start with a higher value and lower it until
 you run into those errors and then go one step back
@@ -264,18 +269,19 @@ about 75% of it rounded might work even better
 - ctx-size is the context size which should be kept in the llm's memory (as in
   brain memory and not ram) in tokens of which each is about 4 chars ... maybe
 try to increase it step by step as long as everything still fits well into
-memory (65536, 98304, 131072 or even more), alternatively omit it and let the
-auto-fit determine which context size still fits well into memory and then
-maybe choose a slightly lower round number, 131072 is a good starting point for
-agentic use
+memory (65536, 81920, 98304, 114688, 131072 or even more), alternatively omit
+it and let the auto-fit determine which context size still fits well into
+memory (see below for how to use the auto-fit mode) and then maybe choose a
+slightly lower round number, 131072 is a good starting point for agentic use
 - ctk and ctv describe the quatization of the key (k) value (v) cache to reduce
   the (ram) memory required to hold it by lowering the resolution ... good
-values are 8_0 (better not lower) for k and 8_0, 5_0 or 4_0 for v (that still
-gives good results with such lower values - see also:
-https://wiki.archlinux.org/title/Llama.cpp
+values are q8_0 (better not lower, if absolutely needed maybe q5_1) for k and
+q8_0, q5_1 or if absolutely needed q4_1 for v (that still gives good results
+with such lower values - see also: https://wiki.archlinux.org/title/Llama.cpp
 https://anbeeld.com/articles/kv-cache-quantization-benchmarks-for-long-context#section-13-5
 and https://github.com/ggml-org/llama.cpp/discussions/23470 ), maybe start with
-ctv 4_0 and go up if there is still memory left
+ctv q8_0 and go down if there is not enough memory left to fit the whole model
+(if possible even in the gpu)
 - jinja instructs llama.cpp to use an embedded template of the gguf model file
 - host and port define the ip and port where the simple ai chat app and also
   the openai style api will be available once the llama-server is running
@@ -287,10 +293,11 @@ tuning the commandline to a certain memory size
 - the remaining parameters are the recommended model parameters for qwen
   3.5/3.6 for coding ... for gemma models those parameters would be "--temp 1.0
 --top-p 0.95 --top-k 64"
-- mmap seems to be required for newer versions of llama.cpp as it does no
+- lm mmap seems to be a good idea for newer versions of llama.cpp as it does no
   longer seem to default to it and it is required if not everything fits
 completely into (gpu) memory, maybe first try without it and if it results in
-errors during startup then add it and see if that helps
+errors during startup then add it and see if that helps or which way it runs
+better
 
 using those options one can achieve around 1+/- token per second for
 pre-processing (pp = i.e. the llm processing your input to it) and also for
@@ -318,10 +325,10 @@ pushing larger parts of the model out of memory or the gpu resulting in more
 re-reads from disk.
 
 update: here is a sample commandline from my experiments mentioned in the
-update above on the 4gb ram system and running on cpu only
+update above on the 4gb aarch64 ram system and running on cpu only
 ```
 # when using openblas, please also do "export OMP_NUM_THREADS=1" before running llama-server
-./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack --ctx-size 45568 -ctk q8_0 -ctv q4_0 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 --mmap
+./build/bin/llama-server -m <path-to-your-model>/Qwen3.5-4B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit off -t 4 --no-repack -ctk q8_0 -ctv q5_1 --jinja --host your-llama-server-ip --port 8033 --timeout 3600 -lv 4 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lm mmap --ctx-size 32768
 ```
 new here is the "no-repack" parameter which avoids the on-the-fly reordering of
 the model data in memory to make it more efficient for some advanced
@@ -333,6 +340,15 @@ thus do not need to fit the memory between cpu and gpu and we lower some
 parameters (ctx-size and ctv) to reduce the memory consumption further. the
 "--fit off" option could also be replaced with "--fit-target 0" here for cpu
 only usage as it might give slightly better memory logging output for tuning.
+
+a good way to determine the best combination of ctx-size, ctk and ctv is to
+omit the ctx-size and set ctk and ctv to q8_0 during a first llama-server run
+and follow its log output where it tries to fit the memory and will print to
+which value it will shrink the context size to fit everything. one can then use
+a context size slightly lower than that. if the resulting context size is too
+slow, then reducing ctv to q5_1 might be an option. alternatively or
+additionally a model with a smaller quantization (q value) could be used to
+lower the memory requirements of the fitted model.
 
 ## getting more memory the easy way and more tuning
 
@@ -364,6 +380,9 @@ to the kernel cmdline for a slight improvement of the token generation speed
 (around 10%). as this opens up quite a few security relevant holes in the
 system, it should not be done for systems which have anything else besides the
 llm running (so no desktop system or coding agent running on the same system).
+it looks starting with v7.5 the linux kernel will do this automatically and in
+a safer way, so this option might not be required anymore then (or not make any
+real difference anymore).
 
 i also did some experiments with the same options on intel systems
 (intel_iommu=off for intel then), but did not see any improvements or more
@@ -372,11 +391,19 @@ to use the ttm memory framework. even setting "GGML_VK_PREFER_HOST_MEMORY=1"
 (see: https://github.com/ggml-org/llama.cpp/discussions/12770 ) did not make
 any difference in my experiments.
 
+another kernel cmdline option to set for amd systems is
+```
+amdgpu.lockup_timeout=-1
+```
+which disables some timeouts, into which the gpu might run into otherwise on
+some complex tasks while doing its llm work - at least on the hp t630 it helped
+quite a few times to set this option.
+
 besides those kernel level changes to make more more memory avaiable to the gpu
 on some amd systems there are also a few more llama.cpp options which should
 help on any system to free up some more memory for the model and the context:
 ```
---parallel 1 --cache-ram 0 --no-mmproj -ctxcp xyz
+--parallel 1 --cache-ram 0 --no-mmproj --no-ui -ctxcp xyz
 ```
 those have the following background:
 - parallel 1 - if we just run our llm to serve a single agent we do not prepare
@@ -387,8 +414,11 @@ those have the following background:
   graphics input is included in the gguf file (rarely the case) then this tells
 llama.cpp to ignore it and thus saving some memory (at the cost of loosing the
 capability to handle visual input)
-- ctxcp xyz - this should be adjusted to the context size used: 65536 -ctxcp 8,
-  131072: -ctxcp 16, 262144: -ctxcp 32 etc. to save some memory as well
+- no-ui - this disables the builtin chat-ui via web-url and might make sense in
+  the case of pure api usage
+- ctxcp xyz - this should be adjusted to the context size used - 65536: -ctxcp
+  8, 81920: -ctxcp 10, 98304: -ctxcp 12, 114688: -ctxcp 14 131072: -ctxcp 16,
+262144: -ctxcp 32 etc. to save some memory as well
 
 experimenting with those options was inspired by
 https://www.reddit.com/r/LocalLLM/comments/1vq5oyu/guide_for_running_dense_models_on_16_gb_vram_qwen/
@@ -400,7 +430,7 @@ parameter) and see which maximal context size gets calculated by the auto-fit
 algorithm built into llama.cpp (it can be seen in the beginning of the "-lv 4"
 logging output of llama.cpp) and then set it to that or a lower value via the
 "--ctx-size" parameter to make sure as much of the model as possible will be
-put into gpu memory.
+put into gpu memory - see above for details.
 
 ## some real world examples
 
@@ -417,52 +447,59 @@ maybe.
 
 ### hp t630 with 8gb ram Qwen3.5-9B-Q4
 
-- kernel cmdline additions for about 7gb of gtt memory: ttm.pages_limit=1835008 ttm.page_pool_size=1835008 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --mmap
+- kernel cmdline additions for about 7gb of gtt memory: ttm.pages_limit=1835008 ttm.page_pool_size=1835008 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 260 -t 4 -ctk q8_0 -ctv q5_1 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 12 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --ctx-size 98304
 - achieved speed: pp 6.6 - tg 1.4
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb
 
 ### hp t630 with 12gb ram Qwen3.5-9B-Q5
 
-- kernel cmdline additions for about 11gb of gtt memory: ttm.pages_limit=2883584 ttm.page_pool_size=2883584 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
+- kernel cmdline additions for about 10.5gb of gtt memory: ttm.pages_limit=2752512 ttm.page_pool_size=2752512 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.5-9B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q8_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap--spec-type draft-mtp --spec-draft-n-max 2 --ctx-size 131072
 - achieved speed: pp 6.4 - tg 1.6
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, mtp model from Qwen3.5-9B-MTP-GGUF has to be used
 
-### hp t630 with 16gb ram Qwen3.6-35B-A3B-Q2
+### hp t630 with 16gb ram Qwen3.6-35B-A3B-IQ3
 
-- kernel cmdline additions for about 15gb of gtt memory: ttm.pages_limit=3932160 ttm.page_pool_size=3932160 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q2_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
-- achieved speed: pp 6.2 - tg 3.8
-- notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, mtp model from Qwen3.6-35B-A3B-MTP-GGUF has to be used, tg is quite good but due to Q2 the cleverness of the model is limited and it might take longer to get to the point
+- kernel cmdline additions for about 14.5gb of gtt memory: ttm.pages_limit=3801088 ttm.page_pool_size=3801088 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-IQ3_S.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_1 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --ctx-size 131072 
+- achieved speed: pp 6.5 - tg 2.7
+- notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, mtp model from Qwen3.6-35B-A3B-MTP-GGUF could also be used with a smaller context, tg is quite good but due to IQ3 the cleverness of the model is limited and it might take longer to get to the point
 
-### hp t630 with 16gb ram Qwen3.8-27B-Q3
+### hp t630 with 16gb ram Qwen3.8-27B-IQ3
 
-- kernel cmdline additions for about 15gb of gtt memory: ttm.pages_limit=3932160 ttm.page_pool_size=3932160 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q3_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj
-- achieved speed: pp 2.0 - tg 0.4
-- notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but it might still be worth it due to the clverness of the 27B model, resulting context size after auto-fit will be around 120k+
+- kernel cmdline additions for about 14.5gb of gtt memory: ttm.pages_limit=3801088 ttm.page_pool_size=3801088 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-IQ3_S.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q5_1 -ctv q5_1 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --ctx-size 131072
+- achieved speed: pp 2.0 - tg 0.5
+- notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but it might still be worth it due to the cleverness of the 27B model
 
-### lenovo m75q ryzen 3200ge 32gb ram Qwen3.6-35B-A3B-Q4
+### lenovo m715q ryzen 2200ge 24gb ram Qwen3.6-35B-A3B-Q4
 
-- kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q4_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
-- achieved speed: pp 40 - tg 10
+- kernel cmdline additions for about 22.5gb of gtt memory: ttm.pages_limit=5898240 ttm.page_pool_size=5898240 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.6-35B-A3B-UD-Q4_K_S.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q8_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --spec-type draft-mtp --spec-draft-n-max 2 --ctx-size 131072
+- achieved speed: pp 33 - tg 9
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite good but the 35B-a3B moe model is not as clever as the 27B dense one and might take longer to get to the point
 
-### lenovo m75q ryzen 3200ge 32gb ram Qwen3.8-27B-Q5
+### lenovo m715q ryzen 2200ge 24gb ram Qwen3.8-27B-Q4
 
-- kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off
-- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072 --spec-type draft-mtp --spec-draft-n-max 2
-- achieved speed: pp 11.5 - tg 2.5
+- kernel cmdline additions for about 22.5gb of gtt memory: ttm.pages_limit=5898240 ttm.page_pool_size=5898240 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Qwen3.8-27B-UD-Q4_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q5_1 --jinja --host ip-address --port 8033 --timeout 3600 --temp 0.6 --top-p 0.95 --top-k 20 --min-p 0.00 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --spec-type draft-mtp --spec-draft-n-max 2 --ctx-size 131072
+- achieved speed: pp 10 - tg 2.2
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but the 27B dense model is more clever than the 35B-a3B moe model and might get quicker to the point
 
-### lenovo m75q ryzen 3200ge 32gb ram Muse-Glimmer-30B-Q5
+### lenovo m715q ryzen 2200ge 24gb ram Muse-Glimmer-30B-Q5
 
-- kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off
-- llama-server cmdline: -m model-path/Muse-Glimmer-30B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 1024 -t 4 -ctk q8_0 -ctv q5_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 1.0 --top-p 0.95 --top-k 64 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -c 131072
-- achieved speed: pp 12.5 - tg 1.5
+- kernel cmdline additions for about 22.5gb of gtt memory: ttm.pages_limit=5898240 ttm.page_pool_size=5898240 amd_iommu=off amdgpu.lockup_timeout=-1
+- llama-server cmdline: -m model-path/Muse-Glimmer-30B-UD-Q5_K_XL.gguf --reasoning off -fa on --fit-target 600 -t 4 -ctk q8_0 -ctv q8_0 --jinja --host ip-address --port 8033 --timeout 3600 --temp 1.0 --top-p 0.95 --top-k 64 -lv 4 -ctxcp 16 --parallel 1 --cache-ram 0 --no-mmproj -lm mmap --ctx-size 131072
+- achieved speed: pp 10 - tg 1.2
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but the 30B dense model is quite clever and might get quicker to the point
+
+### lenovo m715q ryzen 2200ge 32gb ram
+
+- kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off amdgpu.lockup_timeout=-1
+- due to the larger memory avaiable a model with a larger quantizationi, better
+  ctk and ctv values or more context then the one used for the 24gb ram example
+could be used
 
 ## coding with pi
 
