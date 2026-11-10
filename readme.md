@@ -86,11 +86,12 @@ as a result the following models seem to make sense for a certain ram size of
 the llm system and should give useable results to a good degree (they are
 essentially the maximum size possible for the given ram size - smaller models
 with more ram are of course no problem):
-- 4gb: qwen-3.5-4b-q4/q5, spark-x2.6-4b-q4/q5 or gemma-4-e2b-q4
-- 6gb: qwen-3.5-4b-q6, spark-x2.6-4b-q5/q6 or gemma-4-e2b-q5/q6
-- 8gb: qwen-3.5-9b-q4, spark-x2.6-4b-q6/q8, groot-19b-a3b-iq2,
+- 4gb: qwen-3.5-4b-q3, spark-x2.6-4b-q3 or gemma-4-e2b-q4
+- 6gb: qwen-3.5-4b-q4/q5, spark-x2.6-4b-q4/q5 or gemma-4-e2b-q5/q6
+- 8gb: qwen-3.5-9b-q4, spark-x2.6-4b-q5/q6, groot-19b-a3b-iq2,
   gemma-4-e4b-q4/q5 or gemma-4-12b-q3
-- 12gb: qwen-3.5-9B-q5, groot-19b-a3b-iq3, gemma-4-12b-q4 or gemma-4-26b-a4b-q2
+- 12gb: qwen-3.5-9B-q5, spark-x2.6-q8, groot-19b-a3b-iq3, gemma-4-12b-q4 or
+  gemma-4-26b-a4b-q2
 - 16gb: qwen-3.6-35b-a3b-q2/iq3, qwen-3.8-27b-q2/iq3, groot-19b-a3b-q4,
   muse-glimmer-30b-q2/q3, gemma-4-26b-a4b-q3 or gemma-4-12b-q5
 - 24gb: qwen-3.6-35b-a3b-q3/q4, qwen-3.8-27b-q3/q4, groot-19b-a3b-q6,
