@@ -1,16 +1,5 @@
 # the fun of running large language models on small scale machines
 
-# table of contents
-1. [into] #intro
-2. [divide and conquer] #divide-and-conquer
-3. [hardware requirements, tools and models] #hardware-requirements,-tools-and-models
-4. {the surprisingly old ai server machine] #the-surprisingly-old-ai-server-machine
-5. [llm setup and tuning] #llm-setup-and-tuning
-6. [getting more memory the easy way and more tuning] #getting-more-memory-the-easy-way-and-more-tuning
-7. [some real world examples] #some-real-world-examples
-8. [coding with pi] #coding-with-pi
-9. [examples] #examples
-
 ## intro
 
 this here is about some research and experimentation around running large
