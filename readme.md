@@ -494,12 +494,24 @@ maybe.
 - achieved speed: pp 10 - tg 1.2
 - notes: the llm is in this setup completely running on the gpu, video ram in bios has to be set to 256mb, tg is quite low but the 30B dense model is quite clever and might get quicker to the point
 
-### lenovo m715q ryzen 2200ge 32gb ram
+### systems with 32gb ram
 
 - kernel cmdline additions for about 30gb of gtt memory: ttm.pages_limit=7864320 ttm.page_pool_size=7864320 amd_iommu=off amdgpu.lockup_timeout=-1
 - due to the larger memory avaiable a model with a larger quantizationi, better
   ctk and ctv values or more context then the one used for the 24gb ram example
 could be used
+
+### spark-x2.6 and groot-19b-a3b
+
+there are two models which require less memory than the above mentioned ones
+and still deliver very good results for coding tasks. this section should give
+an idea which quantization of those models (created by bartowski) can be used
+on systems with a certain amount of memory. a nice side effect of the small
+size of those models is that they can process and generate tokens at a
+surprisingly fast rate like around 10-15 pp and around 2-3 tg on a hp t630.
+
+- spark-x2.6 (bartowski/Spark-X2.6-4B-GGUF) - 8gb: q5-k-m, q6-k-m, 12gb: q6-k-l, q8
+- groot-19b-a3b (bartowski/GrootTeam_Groot-19B-A3B-261023-GGUF) - 8gb: iq2-s, 12gb: iq3-xs, 16gb: q4-k-m
 
 ## coding with pi
 
