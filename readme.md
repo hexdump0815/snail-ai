@@ -582,7 +582,24 @@ cat > ~/.pi/agent/models.json << EOF
       "apiKey": "none",
       "models": [
         {
-          "id": "llama.cpp"
+          "id": "llama.cpp",
+          "reasoning": true,
+          "supportsReasoningEffort": true,
+          "contextWindow": 131072,
+          "thinkingLevelMap": {
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "xhigh",
+            "xhigh": "xhigh",
+            "max": "xhigh"
+          },
+          "samplingParams": {
+            "temperature": 0.6,
+            "top_p": 0.95,
+            "top_k": 20,
+            "min_p": 0.0
+          }
         }
       ]
     }
@@ -590,6 +607,21 @@ cat > ~/.pi/agent/models.json << EOF
 }
 EOF
 ```
+in the above example a few more things got added:
+- reasoning is enabled by default, so that we can handle its level from within
+  the pi coding agent (by default via shift-tab)
+- the size of the context window our llama-server is running with should be
+  mirrored here as well, so that the percentage of context used is shown
+properly in the pi agent status line and so that automatic compactions will run
+at the proper point int time
+- the thinking levels get mapped, so that we will have low, medium and high
+  mapping to useful values of the model (this is here especially for
+qwen3.8-27b)
+- better set the sampling parameters here and send them to the running model
+  each time as this way we can change them by simply changing the model
+definition here without having to restart llama-server (without them then of
+course)
+
 there is currently a problem of running into timeouts when using slow llms and
 for that a workaround is required - see:
 https://github.com/earendil-works/pi/issues/5089#issuecomment-4559635484 -
@@ -599,6 +631,15 @@ has started once and has created its ~/.pi/agent/settings.json just add:
   "httpIdleTimeoutMs": 0
 ```
 in there.
+
+some more useful parameters to set there might be:
+```
+  "theme": "dark",
+  "tuiMode": "regular",
+  "quietStartup": "header",
+  "defaultThinkingLevel": "low",
+```
+they should be self explanatory i guess.
 
 another problem i noticed with newer versions of pi (i think) is when a slow
 system (espcially with slow disk io) is used as agent system, then operations
@@ -642,6 +683,12 @@ export default function (pi: ExtensionAPI) {
 }
 ```
 
+alternatively one can simply install the above extension as pi extension via:
+```
+!pi install npm:pi-extension-no-timeout
+```
+at the pi prompt after it has been started (see below).
+
 now you can create an empty directory, start pi in it via
 ```
 mise run pi
@@ -652,6 +699,16 @@ readonly mode (use a copy and not the real code anyway)
 ```
 mise run pi:readonly
 ```
+
+adding extensions can be easily done at the pi prompt (as already shown once
+above) - for instance to teach the pi coding agent to search the web if it
+thinks it needs to, it is possible to install the pi-web-access extension. see
+https://pi.dev/packages/pi-web-access and
+https://github.com/nicobailon/pi-web-access for more information about it:
+```
+!pi install npm:https://pi.dev/packages/pi-web-access
+```
+
 from here on you can start experimenting yourself wth your own little local
 coding agent. to give you an idea what can be done with it and how it works
 
